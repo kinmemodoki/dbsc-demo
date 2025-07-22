@@ -1,12 +1,13 @@
 module dbsc-demo
 
-go 1.23.0
+go 1.24
 
 toolchain go1.24.5
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/gorilla/mux v1.8.1
+	github.com/lestrrat-go/jwx/v2 v2.1.6
 )
 
 require (
@@ -16,7 +17,6 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.1.6 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
