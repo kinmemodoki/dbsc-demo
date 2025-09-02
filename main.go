@@ -78,12 +78,13 @@ func setupRouter(traditionalServer *traditional.TraditionalServer, dbscServer *d
 
 	r.Use(loggingMiddleware)
 
-	r.HandleFunc(traditional.EndpointHome, traditional.LoginPageHandler)
+	r.HandleFunc(traditional.EndpointHome, traditional.HomePageHandler)
+	r.HandleFunc(traditional.EndpointLogin, traditional.LoginPageHandler).Methods("GET")
 	r.HandleFunc(traditional.EndpointLogin, func(w http.ResponseWriter, r *http.Request) {
 		dbscServer.InitRegistrationDBSCSessionMiddleware(http.HandlerFunc(traditionalServer.LoginHandler)).ServeHTTP(w, r)
 	}).Methods("POST")
 	r.HandleFunc(traditional.EndpointUserPage, func(w http.ResponseWriter, r *http.Request) {
-		dbscServer.VerifyDBSCSessionMiddleware(http.HandlerFunc(traditional.UserPageHandler)).ServeHTTP(w, r)
+		traditionalServer.VerifyCookieMiddleware(http.HandlerFunc(traditional.UserPageHandler)).ServeHTTP(w, r)
 	})
 
 	// endpoints for DBSC

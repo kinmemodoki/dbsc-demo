@@ -51,6 +51,7 @@
                     body: params
                 });
                 if (res.ok) {
+                    window.location.href = '/userpage';
                 } else {
                     const data = await res.json().catch(() => ({}));
                     errorMsg.textContent = data.message || 'ログインに失敗しました';

@@ -21,6 +21,10 @@ func NewTraditionalServer() *TraditionalServer {
 	}
 }
 
+func HomePageHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, EndpointUserPage, http.StatusFound)
+}
+
 func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/login.html")
 }
@@ -60,9 +64,8 @@ func (s *TraditionalServer) LoginHandler(w http.ResponseWriter, r *http.Request)
 		// MaxAge: 3600,
 	})
 
-	w.Header().Set("Content-Type", "text/plain;charset=utf-8")
-	w.WriteHeader(http.StatusNoContent)
-	// http.Redirect(w, r, EndpointHome, http.StatusSeeOther)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func (s *TraditionalServer) VerifyCookieMiddleware(next http.Handler) http.Handler {
@@ -70,14 +73,14 @@ func (s *TraditionalServer) VerifyCookieMiddleware(next http.Handler) http.Handl
 		logging.Logger.Println("Verifying traditional session")
 		cookie, err := r.Cookie("traditional_cookie")
 		if err != nil || cookie == nil {
-			http.Error(w, "Session cookie not found", http.StatusUnauthorized)
 			w.Header().Set("Location", EndpointLogin)
+			http.Error(w, "Session cookie not found", http.StatusFound)
 			return
 		}
 
 		if !s.sessionManager.VerifyCookie(cookie.Value) {
-			http.Error(w, "Invalid session cookie", http.StatusUnauthorized)
 			w.Header().Set("Location", EndpointLogin)
+			http.Error(w, "Invalid session cookie", http.StatusFound)
 			return
 		}
 

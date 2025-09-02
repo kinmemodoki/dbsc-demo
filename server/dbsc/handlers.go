@@ -125,10 +125,12 @@ func (s *DBSCServer) DBSCRefreshHandler(w http.ResponseWriter, r *http.Request) 
 	secureSessionId := r.Header.Get("Sec-Session-Id")
 	secureSessionResponse := r.Header.Get("Sec-Session-Response")
 	if secureSessionResponse == "" {
+		// If no Sec-Session-Response header, issue a new challenge
 		s.dbscRefreshChallengeHandler(w, r, secureSessionId)
 		return
 	}
 
+	// If Sec-Session-Response header is present, verify and refresh the session
 	s.dbscRefreshHandler(w, r, secureSessionResponse, secureSessionId)
 }
 
