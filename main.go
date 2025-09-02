@@ -93,5 +93,23 @@ func setupRouter(traditionalServer *traditional.TraditionalServer, dbscServer *d
 	})
 	r.HandleFunc(dbsc.EndpointDBSCRefresh, dbscServer.DBSCRefreshHandler).Methods("POST")
 
+	// api
+	r.HandleFunc("/debug/check_dbsc_session", func(w http.ResponseWriter, r *http.Request) {
+		dbscServer.VerifyDBSCSessionMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		).ServeHTTP(w, r)
+	})
+	r.HandleFunc("/api/check_dbsc_session", func(w http.ResponseWriter, r *http.Request) {
+		dbscServer.VerifyDBSCSessionMiddleware(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			}),
+		).ServeHTTP(w, r)
+	})
+
 	return r
 }

@@ -83,8 +83,20 @@ func (s *DBSCServer) DBSCRegisterHandler(w http.ResponseWriter, r *http.Request)
 		SessionIdentifier: session.Identifier,
 		RefreshURL:        EndpointDBSCRefresh,
 		Scope: formats.SessionInstructionScope{
-			Origin:      "https://localhost:8080",
+			Origin:      "http://localhost:8080",
 			IncludeSite: true,
+			ScopeSpecification: []formats.SessionInstructionScopeSpecification{
+				{
+					Type:   "exclude",
+					Domain: "localhost",
+					Path:   "/login",
+				},
+				{
+					Type:   "exclude",
+					Domain: "localhost",
+					Path:   "/debug/check_dbsc_session",
+				},
+			},
 		},
 		Credentials: []formats.SessionInstructionCredential{
 			{
@@ -95,14 +107,15 @@ func (s *DBSCServer) DBSCRegisterHandler(w http.ResponseWriter, r *http.Request)
 		},
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	cookieHeader := http.Cookie{
 		Name:     "dbsc_cookie",
 		Value:    cookie.Value,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   10,
-	})
+		Expires:  cookie.ExpiresAt,
+	}
+	http.SetCookie(w, &cookieHeader)
 
-	logging.Logger.Printf("Sending session instruction response: %+v", response)
+	logging.Logger.Printf("Sending session instruction response: %s", cookieHeader.String())
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -153,7 +166,7 @@ func (s *DBSCServer) dbscRefreshChallengeHandler(w http.ResponseWriter, r *http.
 
 func (s *DBSCServer) dbscRefreshHandler(w http.ResponseWriter, r *http.Request, sessionResponse, sessionID string) {
 	logging.Logger.Printf("==== DBSC Refresh Handler ====")
-	dbscProof, err := s.DBSCProofVerifier.VerifyRefreshProof(sessionResponse, s.getOrigin(r)+EndpointDBSCRefresh, sessionID)
+	_, err := s.DBSCProofVerifier.VerifyRefreshProof(sessionResponse, s.getOrigin(r)+EndpointDBSCRefresh, sessionID)
 	if err != nil {
 		logging.Logger.Printf("Failed to verify DBSC refresh proof: %v", err)
 		http.Error(w, fmt.Sprintf("Invalid DBSC proof: %v", err), http.StatusBadRequest)
@@ -162,41 +175,14 @@ func (s *DBSCServer) dbscRefreshHandler(w http.ResponseWriter, r *http.Request, 
 
 	cookie := s.DBSCSessionManager.GenerateCookie()
 
-	var cookieAttributes string
-	if r.TLS != nil {
-		cookieAttributes = "HttpOnly; Secure; SameSite=Lax"
-	} else {
-		cookieAttributes = "HttpOnly; SameSite=Lax"
-	}
-
-	response := formats.SessionInstructionResponse{
-		Continue:          true,
-		SessionIdentifier: dbscProof.Subject,
-		RefreshURL:        s.getOrigin(r) + EndpointDBSCRefresh,
-		Scope: formats.SessionInstructionScope{
-			Origin:      s.getOrigin(r),
-			IncludeSite: true,
-		},
-		Credentials: []formats.SessionInstructionCredential{
-			{
-				Type:       "cookie",
-				Name:       "dbsc_cookie",
-				Attributes: cookieAttributes,
-			},
-		},
-	}
-
-	http.SetCookie(w, &http.Cookie{
+	cookieHeader := http.Cookie{
 		Name:     "dbsc_cookie",
 		Value:    cookie.Value,
-		HttpOnly: true,
-		Secure:   r.TLS != nil,
-		SameSite: http.SameSiteNoneMode,
-		MaxAge:   60,
-	})
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+		SameSite: http.SameSiteLaxMode,
+		Expires:  cookie.ExpiresAt,
+	}
+	http.SetCookie(w, &cookieHeader)
+	logging.Logger.Printf("successfully refreshed DBSC session: %s", cookieHeader.String())
 }
 
 func (s *DBSCServer) getOrigin(r *http.Request) string {

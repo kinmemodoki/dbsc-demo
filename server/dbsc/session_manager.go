@@ -32,7 +32,7 @@ func (s *DBSCSessionManager) GenerateChallenge() string {
 	challenge := &DBSCChallenge{
 		Value:     s.generateRandomID(),
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(1 * time.Minute),
+		ExpiresAt: time.Now().Add(30 * time.Minute),
 	}
 	s.challenges[challenge.Value] = challenge
 	return challenge.Value
@@ -76,7 +76,7 @@ func (s *DBSCSessionManager) GenerateSession(pem string) *DBSCSession {
 		Identifier:   s.generateRandomID(),
 		PublicKeyPEM: pem,
 		CreatedAt:    time.Now(),
-		ExpiresAt:    time.Now().Add(30 * 24 * time.Hour), // 30 days expiration
+		ExpiresAt:    time.Now().Add(10 * time.Minute), // 10 minutes expiration
 	}
 	s.sessions[session.Identifier] = session
 	logging.Logger.Printf("Generated new session with ID: %s", session.Identifier)

@@ -31,7 +31,6 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 
 func UserPageHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/userpage.html")
-
 }
 
 func (s *TraditionalServer) LoginHandler(w http.ResponseWriter, r *http.Request) {
