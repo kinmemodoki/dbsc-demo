@@ -65,108 +65,53 @@
 </head>
 <body>
     <div class="container">
-        <div class="nav">
-            <a href="/">🏠 ホーム</a>
-            <a href="#" onclick="logout()">🔓 ログアウト</a>
-        </div>
-        
         <h1>👤 ユーザーページ</h1>
-        
-        <div class="success">
-            ✅ DBSCセッションで認証されています
-        </div>
-        
-        <div class="user-info">
-            <h3>📋 ユーザー情報</h3>
-            <p><strong>ユーザー名:</strong> test</p>
-            <p><strong>認証方式:</strong> Device Bound Session Credentials (DBSC)</p>
-            <p><strong>セッション状態:</strong> アクティブ</p>
-        </div>
-        
+
         <div class="session-details">
-            <h3>🔐 DBSCセッション詳細</h3>
-            <p>このページはDBSCで保護されており、デバイス固有の暗号鍵による認証が必要です。</p>
-            <p>通常のクッキーと異なり、DBSCセッションは他のデバイスで再利用できません。</p>
-            <button onclick="refreshDBSCSession()">🔄 セッション更新</button>
-            <button onclick="checkSessionStatus()">📊 セッション状態確認</button>
+            <div id="session-status">dbsc_cookieの状態: 不明</div>
+            <div id="session-expiry"></div>
         </div>
-        
-        <div id="status"></div>
-        <div id="sessionInfo"></div>
-        
-        <h2>🛡️ セキュリティ機能</h2>
-        <ul>
-            <li>デバイス固有の暗号鍵による認証</li>
-            <li>クッキー盗難からの保護</li>
-            <li>セッション・リプレイ攻撃の防止</li>
-            <li>クロスデバイス攻撃の防止</li>
-        </ul>
+
+        <div><label id="session-check-result" class="status info"></label></div>
+        <button onclick="checkSession()">/debug/check_dbsc_session (DBSCのリフレッシュが発生しません)</button>
+        <button onclick="updateSession()">/api/check_dbsc_session (DBSCのリフレッシュが発生します)</button>
     </div>
     
     <script>
-        async function refreshDBSCSession() {
-            const statusDiv = document.getElementById('status');
-            
-            try {
-                statusDiv.innerHTML = '<div class="info">セッション更新中...</div>';
-                
-                const response = await fetch('/dbsc/refresh', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+        function updateSessionStatus() {
+            console.log("Updating session status...");
+            const dbscCookie = document.cookie.split('; ').find(row => row.startsWith('dbsc_cookie='));
+            console.log("Current dbsc_cookie:", document.cookie);
+            let status = 'unknown';
+            let message = '';
+            if (dbscCookie) {
+                status = 'active';
+                message = `5秒以内にexpiredします`;
+            } else {
+                status = 'expired';
+                message = 'expiredしました';
+            }
+            document.getElementById('session-status').innerText = `dbsc_cookieの状態: ${status} (${message})`;
+        }
+
+        // クリックすると /debug/check_dbsc_session エンドポイントにリクエストを送信し、結果を表示
+        function checkSession() {
+            fetch('/debug/check_dbsc_session')
+                .then(response => response.text())
+                .then(result => {
+                    document.getElementById('session-check-result').innerText = result;
                 });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    statusDiv.innerHTML = '<div class="success">✅ セッションが正常に更新されました</div>';
-                    document.getElementById('sessionInfo').innerHTML = 
-                        '<h3>更新されたセッション情報</h3><div style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;">' + 
-                        JSON.stringify(data, null, 2) + '</div>';
-                } else {
-                    throw new Error('セッション更新に失敗しました');
-                }
-            } catch (error) {
-                statusDiv.innerHTML = '<div class="error">❌ エラー: ' + error.message + '</div>';
-            }
         }
-        
-        async function checkSessionStatus() {
-            const statusDiv = document.getElementById('status');
-            
-            try {
-                const response = await fetch('/api/session/status');
-                const data = await response.json();
-                
-                if (data.active) {
-                    statusDiv.innerHTML = '<div class="success">✅ DBSCセッションはアクティブです</div>';
-                    document.getElementById('sessionInfo').innerHTML = 
-                        '<h3>セッション詳細</h3><div style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;">' + 
-                        JSON.stringify(data, null, 2) + '</div>';
-                } else {
-                    statusDiv.innerHTML = '<div class="error">❌ セッションが無効です</div>';
-                }
-            } catch (error) {
-                statusDiv.innerHTML = '<div class="error">❌ セッション確認エラー: ' + error.message + '</div>';
-            }
+        // クリックすると /api/check_dbsc_session エンドポイントにリクエストを送信し、結果を表示
+        function updateSession() {
+            fetch('/api/check_dbsc_session')    
+                .then(response => response.text())
+                .then(result => {
+                    document.getElementById('session-check-result').innerText = result;
+                });
         }
-        
-        async function logout() {
-            try {
-                const response = await fetch('/api/logout', { method: 'POST' });
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
-                    alert('ログアウトに失敗しました');
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = '/';
-            }
-        }
-        
-        // ページ読み込み時にセッション状態を確認
-        window.addEventListener('load', checkSessionStatus);
+
+        setInterval(updateSessionStatus, 1000);
     </script>
 </body>
 </html>
