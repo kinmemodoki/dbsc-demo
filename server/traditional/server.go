@@ -30,6 +30,10 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UserPageHandler(w http.ResponseWriter, r *http.Request) {
+	// Disable browser cache
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 	http.ServeFile(w, r, "static/userpage.html")
 }
 

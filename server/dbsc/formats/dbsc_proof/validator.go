@@ -133,14 +133,10 @@ func (v *DBSCProofVerifier) verifyDBSCClaims(claims *DBSCProof, expectedAud stri
 
 // VerifyRefreshProof verifies a refresh request with session ID validation
 func (v *DBSCProofVerifier) VerifyRefreshProof(tokenString, expectedAud, sessionID string) (*DBSCProof, error) {
-	logging.Logger.Printf("Refresh proof: %s", tokenString)
-
 	claims, err := v.VerifyDBSCProof(tokenString, expectedAud)
 	if err != nil {
 		return nil, err
 	}
-
-	logging.Logger.Printf("Refresh proof: %+v", claims)
 
 	// Verify subject (session ID) for refresh requests
 	/*
